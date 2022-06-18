@@ -57,7 +57,7 @@ npm set registry http://registry.npmmirror.com
 
 ### Rust
 
-> 主要是一下工具需要用上
+> 主要是一些工具需要用上
 
 ```bash
 curl https://sh.rustup.rs -sSf | sh
@@ -80,4 +80,72 @@ EOF
 ## mysql+mysql-admin+redis
 
 [https://gist.github.com/atmoxao/2cc3be2bdd300b82b4f0e95cd91faa5e](https://gist.github.com/atmoxao/2cc3be2bdd300b82b4f0e95cd91faa5e)
+
+```yml
+version: '2.3'
+
+services:
+  mysql:
+    restart: always
+    image: mariadb:10.3
+    container_name: mariadb
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./store/:/var/lib/mysql
+    mem_limit: 512m
+    networks:
+      - mysqlnetwork
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=local
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_PASSWORD=root
+
+  mysql-admin:
+    restart: always
+    image: phpmyadmin/phpmyadmin
+    container_name: mariadb-phpmyadmin
+    ports:
+      - "8001:80"
+    mem_limit: 512m
+    networks:
+      - mysqlnetwork
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+
+  redis-server:
+    restart: always
+    image: redis:4.0
+    container_name: redis-server
+    command: /bin/bash -c 'redis-server --appendonly yes'
+    sysctls:
+      - net.core.somaxconn=65535
+    ports:
+      - "6380:6379"
+    volumes:
+      - ./redis:/data
+    mem_limit: 96m
+    networks:
+      - mysqlnetwork
+volumes:
+  mysql:
+    driver: local
+  redis:
+    driver: local
+
+networks:
+  mysqlnetwork:
+    driver: bridge
+```
 
